@@ -17,6 +17,7 @@ package metrics
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/venicegeo/pz-gocommon/elasticsearch"
 	"github.com/venicegeo/pz-gocommon/gocommon"
@@ -152,31 +153,77 @@ func (db *DataDB) GetStats(id piazza.Ident, req *ReportRequest) (*Report, error)
 	command := "/_search?search_type=count"
 	endpoint := fmt.Sprintf("/%s%s", indexName, command)
 
+	newExtendedStatsAggsQuery := func(fieldName string) map[string]interface{} {
+		m := map[string]interface{}{
+			"extended_stats": map[string]interface{}{
+				"field": fieldName,
+			},
+		}
+		return m
+	}
+
+	newRangeQuery := func(fieldName string, start time.Time, stop time.Time) map[string]interface{} {
+		m := map[string]interface{}{
+			fieldName: map[string]interface{}{
+				"gte": start.Format(time.RFC3339),
+				"lt":  stop.Format(time.RFC3339),
+			},
+		}
+		return m
+	}
+
+	newTermQuery := func(fieldName string, value interface{}) map[string]interface{} {
+		m := map[string]interface{}{
+			fieldName: value,
+		}
+		return m
+	}
+
+	newPercentilesAggsQuery := func(field string, value string) map[string]interface{} {
+		m := map[string]interface{}{
+			"percentiles": map[string]interface{}{
+				field: value,
+			},
+		}
+		return m
+	}
+
+	newDateHistogramAggsQuery := func(dateFieldName string, interval string, valueFieldName string) map[string]interface{} {
+		m := map[string]interface{}{
+			"date_histogram": map[string]interface{}{
+				"field":         dateFieldName,
+				"interval":      interval,
+				"format":        "strict_date_time",
+				"min_doc_count": 0,
+			},
+			"aggs": map[string]interface{}{
+				"typelog": map[string]interface{}{
+					"stats": map[string]interface{}{
+						"field": valueFieldName,
+					},
+				},
+			},
+		}
+		return m
+	}
+
 	in := &map[string]interface{}{
 		"aggs": map[string]interface{}{
-			"stats_report": map[string]interface{}{
-				"extended_stats": map[string]interface{}{
-					"field": "value",
-				},
-			},
-			"percs_report": map[string]interface{}{
-				"percentiles": map[string]interface{}{
-					"field": "value",
-				},
-			},
-			"hist_report": map[string]interface{}{
-				"date_histogram": map[string]interface{}{
-					"field":         "timestamp",
-					"interval":      req.Interval,
-					"format":        "strict_date_time",
-					"min_doc_count": 0,
-				},
-				"aggs": map[string]interface{}{
-					"typelog": map[string]interface{}{
-						"stats": map[string]interface{}{
-							"field": "value",
+			"foo": map[string]interface{}{
+				"filter": map[string]interface{}{
+					"and": []interface{}{
+						map[string]interface{}{
+							"term": newTermQuery("metricId", id.String()),
+						},
+						map[string]interface{}{
+							"range": newRangeQuery("timestamp", req.Start, req.End),
 						},
 					},
+				},
+				"aggs": map[string]interface{}{
+					"stats_report": newExtendedStatsAggsQuery("value"),
+					"percs_report": newPercentilesAggsQuery("field", "value"),
+					"hist_report":  newDateHistogramAggsQuery("timestamp", req.Interval, "value"),
 				},
 			},
 		},
@@ -188,30 +235,63 @@ func (db *DataDB) GetStats(id piazza.Ident, req *ReportRequest) (*Report, error)
 		return nil, err
 	}
 
+	// get the error, if there is one
+	f_error := func(i interface{}) (interface{}, error) {
+		ii := i.(*map[string]interface{})
+		if ii == nil {
+			return nil, nil
+		}
+		s := (*ii)["error"]
+		return s, nil
+	}
+
+	// given an interface, convert to a map, find the given field, and return the value as a map
+	f_map := func(i interface{}, field string) (map[string]interface{}, error) {
+		ii := i.(map[string]interface{})
+		if ii == nil {
+			return nil, fmt.Errorf("Failed to extract field %s, because source is not map", field)
+		}
+		iii := ii[field]
+		m := iii.(map[string]interface{})
+		if m == nil {
+			return nil, fmt.Errorf("Failed to extract field %s, because value is not map", field)
+		}
+		return m, nil
+	}
+
+	m, err := f_error(out)
+	if err != nil {
+		return nil, err
+	}
+	if m != nil {
+		return nil, fmt.Errorf("ERROR ERROR %#v", m)
+	}
+
 	var stats, percs, histo interface{}
 	{
-		aggsx := (*out)["aggregations"]
-		if aggsx == nil {
-			return nil, fmt.Errorf("Failed to get aggsx")
-		}
-		aggs := aggsx.(map[string]interface{})
-		if aggs == nil {
-			return nil, fmt.Errorf("Failed to get aggs")
+		outerAggs, err := f_map(*out, "aggregations")
+		if err != nil {
+			return nil, err
 		}
 
-		stats = aggs["stats_report"]
-		if stats == nil {
-			return nil, fmt.Errorf("Failed to get stats")
+		foo, err := f_map(outerAggs, "foo")
+		if err != nil {
+			return nil, err
 		}
 
-		percs = aggs["percs_report"]
-		if percs == nil {
-			return nil, fmt.Errorf("Failed to get percs")
+		stats, err = f_map(foo, "stats_report")
+		if err != nil {
+			return nil, err
 		}
 
-		histo = aggs["hist_report"]
-		if histo == nil {
-			return nil, fmt.Errorf("Failed to get histo")
+		percs, err = f_map(foo, "percs_report")
+		if err != nil {
+			return nil, err
+		}
+
+		histo, err = f_map(foo, "hist_report")
+		if err != nil {
+			return nil, err
 		}
 	}
 

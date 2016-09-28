@@ -45,7 +45,7 @@ type Metric struct {
 type Data struct {
 	ID        piazza.Ident `json:"id"`
 	MetricID  piazza.Ident `json:"metricId"`
-	Timestamp string       `json:"timestamp"` // millis since epoch
+	Timestamp string       `json:"timestamp"`
 	Value     float64      `json:"value"`
 }
 
