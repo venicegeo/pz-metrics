@@ -17,7 +17,6 @@ package metrics
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/venicegeo/pz-gocommon/elasticsearch"
 	"github.com/venicegeo/pz-gocommon/gocommon"
@@ -35,8 +34,13 @@ const DataIndexSettings = `
         "mappings": {
             "Data": {
                 "properties": {
-					"timeStamp": {
-						"type": "long",
+					"timestamp": {
+						"type": "date",
+						"store": true,
+						"index": "not_analyzed"
+					},
+					"metricId": {
+						"type": "string",
 						"store": true,
 						"index": "not_analyzed"
 					},
@@ -162,10 +166,17 @@ func (db *DataDB) GetStats(id piazza.Ident, req *ReportRequest) (*Report, error)
 			},
 			"hist_report": map[string]interface{}{
 				"date_histogram": map[string]interface{}{
-					"field":    "value",
-					"interval": req.Interval,
-					//"format":        "HH:mm:ss.SSS",
+					"field":         "timestamp",
+					"interval":      req.Interval,
+					"format":        "strict_date_time",
 					"min_doc_count": 0,
+				},
+				"aggs": map[string]interface{}{
+					"typelog": map[string]interface{}{
+						"stats": map[string]interface{}{
+							"field": "value",
+						},
+					},
 				},
 			},
 		},
@@ -176,7 +187,7 @@ func (db *DataDB) GetStats(id piazza.Ident, req *ReportRequest) (*Report, error)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("== %#v", out)
+
 	var stats, percs, histo interface{}
 	{
 		aggsx := (*out)["aggregations"]

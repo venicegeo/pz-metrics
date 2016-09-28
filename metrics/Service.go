@@ -119,11 +119,6 @@ func (service *Service) makeMetricIndex(metricIndex elasticsearch.IIndex) error 
 						"type": "string",
 						"store": true,
 						"index": "not_analyzed"
-					},
-					"datatype": {
-						"type": "string",
-						"store": true,
-						"index": "not_analyzed"
 					}
 				}
 			}
@@ -165,8 +160,8 @@ func (service *Service) makeDataIndex(dataIndex elasticsearch.IIndex) error {
 			`{
 			"DataIndex":{
 				"properties": {
-					"timeStamp": {
-						"type": "long",
+					"timestamp": {
+						"type": "date",
 						"store": true,
 						"index": "not_analyzed"
 					},

@@ -45,7 +45,7 @@ type Metric struct {
 type Data struct {
 	ID        piazza.Ident `json:"id"`
 	MetricID  piazza.Ident `json:"metricId"`
-	Timestamp time.Time    `json:"timestamp"`
+	Timestamp string       `json:"timestamp"` // millis since epoch
 	Value     float64      `json:"value"`
 }
 
@@ -54,7 +54,7 @@ type ReportRequest struct {
 	End   time.Time `json:"end"`
 
 	// year, quarter, month, week, day, hour, minute, second
-	// or fractiosn thereof, e.g. "0.001s"
+	// or fractions thereof, e.g. "0.001s"
 	Interval string `json:"interval"`
 }
 

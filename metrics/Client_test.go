@@ -117,6 +117,11 @@ func (suite *LoggerTester) teardownFixture() {
 	}
 }
 
+func now() string {
+	ms := time.Now().Format(time.RFC3339) //String() //UnixNano() / 1000000
+	return ms                             //strconv.FormatInt(ms, 10)
+}
+
 func TestRunSuite(t *testing.T) {
 	s := &LoggerTester{}
 	suite.Run(t, s)
@@ -178,7 +183,7 @@ func (suite *LoggerTester) xTest02Data() {
 
 	data := Data{
 		Value:     17,
-		Timestamp: time.Now(),
+		Timestamp: now(),
 	}
 
 	_, err = client.GetData("badid")
@@ -224,8 +229,8 @@ func (suite *LoggerTester) Test03Report() {
 	for i := 0; i < 10; i++ {
 		data := Data{
 			MetricID:  metricId,
-			Value:     1,
-			Timestamp: time.Now(),
+			Value:     -1,
+			Timestamp: now(),
 		}
 
 		_, err := suite.client.PostData(&data)
@@ -237,8 +242,8 @@ func (suite *LoggerTester) Test03Report() {
 	for i := 0; i < 10; i++ {
 		data := Data{
 			MetricID:  metricId,
-			Value:     888,
-			Timestamp: time.Now(),
+			Value:     990,
+			Timestamp: now(),
 		}
 
 		_, err := suite.client.PostData(&data)
@@ -251,7 +256,7 @@ func (suite *LoggerTester) Test03Report() {
 		data := Data{
 			MetricID:  metricId,
 			Value:     50,
-			Timestamp: time.Now(),
+			Timestamp: now(),
 		}
 
 		_, err := suite.client.PostData(&data)
@@ -269,5 +274,7 @@ func (suite *LoggerTester) Test03Report() {
 	assert.NoError(err)
 	assert.NotNil(report)
 
-	log.Printf("REPORT: %#v", report)
+	log.Printf("Statistics: %#v", report.Statistics)
+	log.Printf("Percentiles: %#v", report.Percentiles)
+	log.Printf("Histogram: %#v", report.Histogram)
 }
