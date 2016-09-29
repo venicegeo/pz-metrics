@@ -220,8 +220,8 @@ func (c *Client) DeleteData(id piazza.Ident) error {
 
 //---------------------------------------------------------------------
 
-func (c *Client) GetReport(id piazza.Ident, req *ReportRequest) (*Report, error) {
-	out := &Report{}
+func (c *Client) GetReport(id piazza.Ident, req *ReportRequest) (*FullReport, error) {
+	out := &FullReport{}
 	err := c.getObject2("/report/"+id.String(), req, out)
 	//log.Printf("stats2: %#v", out)
 	return out, err

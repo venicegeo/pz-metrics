@@ -126,7 +126,7 @@ func TestRunSuite(t *testing.T) {
 	suite.Run(t, s)
 }
 
-func (suite *LoggerTester) xTest00DirectAccess() {
+func (suite *LoggerTester) Test00DirectAccess() {
 	t := suite.T()
 	assert := assert.New(t)
 
@@ -136,10 +136,12 @@ func (suite *LoggerTester) xTest00DirectAccess() {
 	out := &map[string]interface{}{}
 	err := suite.dataIndex.DirectAccess("GET", "", nil, out)
 	assert.NoError(err)
-	log.Printf("** %#v", out)
+	assert.NotNil(out)
+	assert.Equal("You Know, for Search", (*out)["tagline"])
+	//log.Printf("** %#v", out)
 }
 
-func (suite *LoggerTester) xTest01Metric() {
+func (suite *LoggerTester) Test01Metric() {
 	t := suite.T()
 	assert := assert.New(t)
 
@@ -169,7 +171,7 @@ func (suite *LoggerTester) xTest01Metric() {
 	assert.Error(err)
 }
 
-func (suite *LoggerTester) xTest02Data() {
+func (suite *LoggerTester) Test02Data() {
 	t := suite.T()
 	assert := assert.New(t)
 
@@ -303,11 +305,11 @@ func (suite *LoggerTester) Test03Report() {
 		End:      stop.Add(1 * time.Second),
 		Interval: "0.5s",
 	}
+
 	report, err := suite.client.GetReport(metricId, req)
 	assert.NoError(err)
 	assert.NotNil(report)
+	assert.NotEmpty(report.String())
 
-	log.Printf("STATISTICS: %#v", report.Statistics)
-	log.Printf("PERCENTILES: %#v", report.Percentiles)
-	log.Printf("HISTOGRAM: %#v", report.Histogram)
+	log.Printf("%s", report)
 }

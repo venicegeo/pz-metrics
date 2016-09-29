@@ -58,25 +58,6 @@ type ReportRequest struct {
 	Interval string `json:"interval"`
 }
 
-type StatisticsReport struct {
-	Data interface{} `json:"data"`
-}
-
-type PercentilesReport struct {
-	Data interface{} `json:"data"`
-}
-
-type HistogramReport struct {
-	Data interface{} `json:"data"`
-}
-
-type Report struct {
-	MetricID    piazza.Ident      `json:"metricId"`
-	Statistics  StatisticsReport  `json:"statistics"`
-	Percentiles PercentilesReport `json:"percentiles"`
-	Histogram   HistogramReport   `json:"histogram"`
-}
-
 //---------------------------------------------------------------------------
 
 func LoggedError(mssg string, args ...interface{}) error {
@@ -94,6 +75,6 @@ func init() {
 	piazza.JsonResponseDataTypes["metrics.Data"] = "metricsdata"
 	piazza.JsonResponseDataTypes["*metrics.Data"] = "metricsdata"
 	piazza.JsonResponseDataTypes["[]metrics.Data"] = "metricsdata-list"
-	piazza.JsonResponseDataTypes["metrics.Report"] = "metricsreport"
-	piazza.JsonResponseDataTypes["*metrics.Report"] = "metricsreport"
+	piazza.JsonResponseDataTypes["metrics.FullReport"] = "metricsreport"
+	piazza.JsonResponseDataTypes["*metrics.FullReport"] = "metricsreport"
 }
