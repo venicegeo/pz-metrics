@@ -150,6 +150,8 @@ func (db *DataDB) GetStats(id piazza.Ident, req *ReportRequest) (*FullReport, er
 	indexName := db.Esi.IndexName()
 	//log.Printf("DataDB.GetStats: %s %s", id.String(), indexName)
 
+	//log.Printf("DataDB.GetStats: %#v", *req)
+
 	command := "/_search?search_type=count"
 	endpoint := fmt.Sprintf("/%s%s", indexName, command)
 
@@ -165,9 +167,10 @@ func (db *DataDB) GetStats(id piazza.Ident, req *ReportRequest) (*FullReport, er
 					),
 				},
 				"aggs": map[string]interface{}{
-					"stats_report": newExtendedStatsAggsQuery("value"),
-					"percs_report": newPercentilesAggsQuery("field", "value"),
-					"hist_report":  newDateHistogramAggsQuery("timestamp", req.Interval, "value"),
+					"stats_report":      newExtendedStatsAggsQuery("value"),
+					"percs_report":      newPercentilesAggsQuery("field", "value"),
+					"date_hist_report":  newDateHistogramAggsQuery("timestamp", req.DateInterval, "value"),
+					"value_hist_report": newHistogramAggsQuery("value", req.ValueInterval),
 				},
 			},
 		},
@@ -183,7 +186,8 @@ func (db *DataDB) GetStats(id piazza.Ident, req *ReportRequest) (*FullReport, er
 		return nil, err
 	}
 
-	sort.Sort(ByBucket(out.Aggregations.FullReport.HistReport.Buckets))
+	sort.Sort(ByDateBucket(out.Aggregations.FullReport.DateHistReport.Buckets))
+	sort.Sort(ByValueBucket(out.Aggregations.FullReport.ValueHistReport.Buckets))
 
 	return &out.Aggregations.FullReport, nil
 }

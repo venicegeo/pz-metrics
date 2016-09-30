@@ -55,7 +55,9 @@ type ReportRequest struct {
 
 	// year, quarter, month, week, day, hour, minute, second
 	// or fractions thereof, e.g. "0.001s"
-	Interval string `json:"interval"`
+	DateInterval string `json:"dateInterval"`
+
+	ValueInterval string `json:"valueInterval"`
 }
 
 //---------------------------------------------------------------------------

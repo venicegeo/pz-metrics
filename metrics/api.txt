@@ -1,0 +1,153 @@
+=== REST ENDPOINTS ==================================================
+
+POST /metric
+  creates a metric to collect, e.g. "server response time"
+  the input is a Metric object
+  the return is the Metric object, with ID filled input
+
+GET /metric
+  returns all the Metrics, as an array
+
+GET /metric/:id
+  returns a specific Metric
+
+DELETE /metric/:id
+  deletes a specific Metric
+
+---------------------------------------------------------------------
+
+POST /data
+  adds a data point to the system, e.g. "17"
+  the input is a Data object
+  the return is the Data object, with ID filled input
+
+GET /data/:id
+  returns a specific Data object
+
+DELETE /data/:id
+  deletes a specific Data object
+
+---------------------------------------------------------------------
+
+GET /report/:id
+  returns a json "report" for the given Metric over the given time range
+  the input is a ReportRequest object
+  the output is a complex json object
+
+
+
+=== OBJECT MODEL ====================================================
+
+Metric json object:
+  {
+    id          string   -- supplied by system
+    name        string
+    description string
+    units       string   -- enum for "seconds", "square yards", etc
+  }
+
+---------------------------------------------------------------------
+
+Data json object:
+  {
+    id        string    -- supplied by system 
+    metricId  string    -- which metric this data point is for
+    timestamp string    -- exact time event was recorded
+    value     float64   -- the actual data point to be recorded
+  }
+
+---------------------------------------------------------------------
+
+ReportRequest jsob object:
+  {
+    start         string   -- beginning of time span to report on, as RFC3339
+    end           string   -- end of time span to report on, as RFC3999
+    dateInterval  string   -- bucket size for date histogram, e.g. "1s" or "7d"
+    valueInterval string   -- bucket size for value histogram, e.g. "10" or "25"
+  }
+
+
+
+=== EXAMPLE =========================================================
+
+Data values posted, over a period of several seconds:
+  -1, ...   (10 times)
+  555, ...  (10 times)
+  50, ...   (100 times)
+
+Output:
+
+STATISTICS:
+  Count: 120
+  Min: -1.000000
+  Max: 555.000000
+  Avg: 87.833333
+  Sum: 10540.000000
+  SumOfSquares: 3330260.000000
+  Variance: 20037.472222
+  StdDeviation: 141.553779
+  StdDeviation.Lower: -195.274224
+  StdDeviation.Upper: 370.940890
+
+PERCENTILES:
+  1%: -1.000000
+  5%: -1.000000
+  25%: 50.000000
+  50%: 50.000000
+  75%: 50.000000
+  95%: 555.000000
+  99%: 555.000000
+
+DATE-HISTOGRAM:
+  Buckets:
+    #0:
+      Key: 2016-09-30T15:09:23.000Z
+      Count: 10
+      Stats: count: 10, min: -1.000000, max: -1.000000, avg: -1.000000
+    #1:
+      Key: 2016-09-30T15:09:23.500Z
+      Count: 0
+      Stats: count: 0, min: 0.000000, max: 0.000000, avg: 0.000000
+    #2:
+      Key: 2016-09-30T15:09:24.000Z
+      Count: 10
+      Stats: count: 10, min: 555.000000, max: 555.000000, avg: 555.000000
+    #3:
+      Key: 2016-09-30T15:09:24.500Z
+      Count: 0
+      Stats: count: 0, min: 0.000000, max: 0.000000, avg: 0.000000
+    #4:
+      Key: 2016-09-30T15:09:25.000Z
+      Count: 100
+      Stats: count: 100, min: 50.000000, max: 50.000000, avg: 50.000000
+
+VALUE-HISTOGRAM:
+  Buckets:
+    #0:
+      Key: -100.000000
+      Count: 10
+      Stats: count: 10, min: -1.000000, max: -1.000000, avg: -1.000000
+    #1:
+      Key: 0.000000
+      Count: 100
+      Stats: count: 100, min: 50.000000, max: 50.000000, avg: 50.000000
+    #2:
+      Key: 100.000000
+      Count: 0
+      Stats: count: 0, min: 0.000000, max: 0.000000, avg: 0.000000
+    #3:
+      Key: 200.000000
+      Count: 0
+      Stats: count: 0, min: 0.000000, max: 0.000000, avg: 0.000000
+    #4:
+      Key: 300.000000
+      Count: 0
+      Stats: count: 0, min: 0.000000, max: 0.000000, avg: 0.000000
+    #5:
+      Key: 400.000000
+      Count: 0
+      Stats: count: 0, min: 0.000000, max: 0.000000, avg: 0.000000
+    #6:
+      Key: 500.000000
+      Count: 10
+      Stats: count: 10, min: 555.000000, max: 555.000000, avg: 555.000000

@@ -301,9 +301,10 @@ func (suite *LoggerTester) Test03Report() {
 	sleep()
 
 	req := &ReportRequest{
-		Start:    start.Add(-1 * time.Second),
-		End:      stop.Add(1 * time.Second),
-		Interval: "0.5s",
+		Start:         start.Add(-1 * time.Second),
+		End:           stop.Add(1 * time.Second),
+		DateInterval:  "0.5s",
+		ValueInterval: "100",
 	}
 
 	report, err := suite.client.GetReport(metricId, req)

@@ -70,6 +70,24 @@ func newDateHistogramAggsQuery(dateFieldName string, interval string, valueField
 	return m
 }
 
+func newHistogramAggsQuery(fieldName string, interval string) map[string]interface{} {
+	m := map[string]interface{}{
+		"histogram": map[string]interface{}{
+			"field":    fieldName,
+			"interval": interval,
+			//"min_doc_count": 0,
+		},
+		"aggs": map[string]interface{}{
+			"bucket_stats": map[string]interface{}{
+				"stats": map[string]interface{}{
+					"field": fieldName,
+				},
+			},
+		},
+	}
+	return m
+}
+
 // {k1:v1, k2:v2, ...} ==> [{k1:v1},{k2:v2}]
 func newAndFilter(items map[string]interface{}) []interface{} {
 	m := []interface{}{}

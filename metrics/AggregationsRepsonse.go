@@ -77,52 +77,87 @@ type BucketStats struct {
 }
 
 func (b *BucketStats) String() string {
-	s := `count: %d, min: %f, max: %f, avg: %f, sum: %f`
-	return fmt.Sprintf(s, b.Count, b.Min, b.Max, b.Avg, b.Sum)
+	s := `count: %d, min: %f, max: %f, avg: %f`
+	return fmt.Sprintf(s, b.Count, b.Min, b.Max, b.Avg)
 }
 
-type Bucket struct {
-	Key         float64     `json:"Key"`
+type DateBucket struct {
+	Key         float64     `json:"key"`
 	KeyAsString string      `json:"key_as_string"`
 	BucketStats BucketStats `json:"bucket_stats"`
 	DocCount    int         `json:"doc_count"`
 }
 
-type ByBucket []Bucket
+type ValueBucket struct {
+	Key         float64     `json:"key"`
+	BucketStats BucketStats `json:"bucket_stats"`
+	DocCount    int         `json:"doc_count"`
+}
 
-func (a ByBucket) Len() int           { return len(a) }
-func (a ByBucket) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByBucket) Less(i, j int) bool { return a[i].KeyAsString < a[j].KeyAsString }
+type ByDateBucket []DateBucket
 
-func (b *Bucket) String() string {
+func (a ByDateBucket) Len() int           { return len(a) }
+func (a ByDateBucket) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByDateBucket) Less(i, j int) bool { return a[i].KeyAsString < a[j].KeyAsString }
+
+func (b *DateBucket) String() string {
 	s := `      Key: %s
       Count: %d
       Stats: %s`
 	return fmt.Sprintf(s, b.KeyAsString, b.DocCount, b.BucketStats.String())
 }
 
-type HistReport struct {
-	Buckets []Bucket `json:"buckets"`
+type ByValueBucket []ValueBucket
+
+func (a ByValueBucket) Len() int           { return len(a) }
+func (a ByValueBucket) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByValueBucket) Less(i, j int) bool { return a[i].Key < a[j].Key }
+
+func (b *ValueBucket) String() string {
+	s := `      Key: %f
+      Count: %d
+      Stats: %s`
+	return fmt.Sprintf(s, b.Key, b.DocCount, b.BucketStats.String())
 }
 
-func (d *HistReport) String() string {
-	s := fmt.Sprintf("  Buckets: %d\n", len(d.Buckets))
+type DateHistReport struct {
+	Buckets []DateBucket `json:"buckets"`
+}
+
+func (d *DateHistReport) String() string {
+	s := fmt.Sprintf("  Buckets:\n")
 	for i, b := range d.Buckets {
 		t := b.String()
-		s += fmt.Sprintf("    %d:\n%s\n", i, t)
+		s += fmt.Sprintf("    #%d:\n%s\n", i, t)
+	}
+	return s
+}
+
+type ValueHistReport struct {
+	Buckets []ValueBucket `json:"buckets"`
+}
+
+func (d *ValueHistReport) String() string {
+	s := fmt.Sprintf("  Buckets:\n")
+	for i, b := range d.Buckets {
+		t := b.String()
+		s += fmt.Sprintf("    #%d:\n%s\n", i, t)
 	}
 	return s
 }
 
 type FullReport struct {
-	StatsReport StatsReport `json:"stats_report"`
-	PercsReport PercsReport `json:"percs_report"`
-	HistReport  HistReport  `json:"hist_report"`
+	StatsReport     StatsReport     `json:"stats_report"`
+	PercsReport     PercsReport     `json:"percs_report"`
+	DateHistReport  DateHistReport  `json:"date_hist_report"`
+	ValueHistReport ValueHistReport `json:"value_hist_report"`
 }
 
 func (d *FullReport) String() string {
-	return fmt.Sprintf("STATISTICS:\n%s\nPERCENTILES:\n%s\nHISTOGRAM:\n%s\n",
-		d.StatsReport.String(), d.PercsReport.String(), d.HistReport.String())
+	return fmt.Sprintf("STATISTICS:\n%s\nPERCENTILES:\n%s\nDATE-HISTOGRAM:\n%s\nVALUE-HISTOGRAM:\n%s\n",
+		d.StatsReport.String(), d.PercsReport.String(),
+		d.DateHistReport.String(),
+		d.ValueHistReport.String())
 }
 
 type Aggregations struct {
