@@ -91,7 +91,7 @@ blogTag:
 
 # What technologies are used in this project?
 stack:
-- Go
+- GoLang
 
 # What are the services used to supply project status information?
 # Items:
